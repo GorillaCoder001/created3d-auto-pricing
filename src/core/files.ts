@@ -2,7 +2,7 @@ import {unzipSync,strFromU8} from 'fflate';
 import {XMLParser,XMLValidator} from 'fast-xml-parser';
 import {parseGcodeStatistics} from './gcode-statistics';
 import type {Analysis,Config,Plate} from './types';
-export const MAX_FILE=80*1024*1024, MAX_TRIANGLES=400000;
+export const MAX_FILE=160*1024*1024, MAX_TRIANGLES=1000000;
 const arr=(v:any):any[]=>v==null?[]:Array.isArray(v)?v:[v];
 const xmlParser=new XMLParser({ignoreAttributes:false,attributeNamePrefix:'',removeNSPrefix:true,processEntities:false,parseAttributeValue:false});
 function xml(text:string){if(text.length>80*1024*1024||/<!DOCTYPE|<!ENTITY/i.test(text)||XMLValidator.validate(text)!==true)throw Error('Invalid or unsupported XML.');return xmlParser.parse(text);}
@@ -25,7 +25,7 @@ export function inspectZip(buffer:ArrayBuffer):ZipEntry[]{
  for(let p=buffer.byteLength-22;p>=Math.max(0,buffer.byteLength-65557);p--)if(v.getUint32(p,true)===0x06054b50){eocd=p;break;}
  if(eocd<0||v.getUint16(eocd+4,true)!==0||v.getUint16(eocd+6,true)!==0)throw Error('Invalid or multi-disk 3MF archive.');
  const count=v.getUint16(eocd+10,true),centralSize=v.getUint32(eocd+12,true);let p=v.getUint32(eocd+16,true);
- if(count>2000||count===65535||centralSize===0xffffffff||p+centralSize>eocd)throw Error('Archive directory is too large or unsupported ZIP64.');
+ if(count>3000||count===65535||centralSize===0xffffffff||p+centralSize>eocd)throw Error('Archive directory is too large or unsupported ZIP64.');
  const result:ZipEntry[]=[];let total=0;const names=new Set<string>();
  for(let i=0;i<count;i++){
   if(p+46>eocd||v.getUint32(p,true)!==0x02014b50)throw Error('Invalid archive directory.');
@@ -33,7 +33,7 @@ export function inspectZip(buffer:ArrayBuffer):ZipEntry[]{
   if(p+46+length+extra+comment>eocd)throw Error('Truncated archive directory.');
   const name=strFromU8(new Uint8Array(buffer,p+46,length));
   if(flags&1||![0,8].includes(method)||name.includes('\\')||name.split('/').includes('..')||name.startsWith('/')||names.has(name.toLowerCase()))throw Error('Unsafe, encrypted or duplicate archive entry.');
-  total+=size;if(size>100*1024*1024||total>220*1024*1024||size>2*1024*1024&&size/Math.max(1,compressed)>500)throw Error('Archive exceeds decompression limits.');
+  total+=size;if(size>180*1024*1024||total>380*1024*1024||size>2*1024*1024&&size/Math.max(1,compressed)>500)throw Error('Archive exceeds decompression limits.');
   names.add(name.toLowerCase());result.push({name,size,compressed});p+=46+length+extra+comment;
  }
  return result;
@@ -99,7 +99,7 @@ export function parse3MF(buffer:ArrayBuffer){
  if(modelSettings){try{
   const data=xml(strFromU8(modelSettings[1]));
   for(const object of arr(data.config?.object))for(const part of [object,...arr(object.part)]){
-   if(part.subtype&&part.subtype!=='normal_part')geometryBlocked='This project contains negative volumes, modifiers or nonstandard parts. Their boolean/process effects are not supported; use saved slice statistics or manual totals.';
+   if(part.subtype&&part.subtype!=='normal_part')geometryBlocked='This project contains negative volumes, modifiers or nonstandard parts. Their boolean/process effects are not supported; only a low-confidence envelope estimate can be shown.';
    for(const m of arr(part.metadata))if(['extruder','wall_filament','sparse_infill_filament','solid_infill_filament','support_filament','support_interface_filament'].includes(m.key)&&Number(m.value)>0)assigned.add(String(m.value));
   }
  }catch{warnings.push('Part settings could not be read; per-part colours and process settings remain unknown.');}}
@@ -157,12 +157,12 @@ export function analysePositions(positions:Float32Array):Omit<Analysis,'plates'|
  for(let i=0;i<positions.length;i+=9){const [ax,ay,az,bx,by,bz,cx,cy,cz]=positions.subarray(i,i+9),ux=bx-ax,uy=by-ay,uz=bz-az,vx=cx-ax,vy=cy-ay,vz=cz-az;const nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;sideArea+=Math.hypot(nx,ny)/2;if(nz>0)topProjectedArea+=nz/2;else bottomProjectedArea-=nz/2;if(nz< -Math.SQRT1_2*Math.hypot(nx,ny,nz)&&Math.max(az,bz,cz)>min[2]+0.01)overhangArea+=Math.hypot(nx,ny,nz)/2;}
  let openEdges=0,nonManifold=0,inconsistent=0;for(const e of edges.values()){if(e.count===1)openEdges++;else if(e.count!==2)nonManifold++;else if(e.direction!==0)inconsistent++;}
  const volumes=new Map<number,number>();faceVolumes.forEach((v,i)=>{const root=find(i);volumes.set(root,(volumes.get(root)??0)+v);});const volume=[...volumes.values()].reduce((s,v)=>s+Math.abs(v),0);
- const warnings:string[]=[];if(openEdges||nonManifold||inconsistent||degenerate)warnings.push('Mesh needs review: open edges, degeneracies, winding or non-manifold geometry detected. Use manual or slicer statistics.');
+ const warnings:string[]=[];if(openEdges||nonManifold||inconsistent||degenerate)warnings.push('Mesh topology needs review. Only a low-confidence envelope estimate is available until a repaired model or saved slicer totals are provided.');
  warnings.push('Topology check does not detect self-intersections, nested solids or intersecting parts. STL units are assumed to be millimetres.');
  return {positions,dimensions:max.map((n,i)=>n-min[i]) as [number,number,number],volume,area,sideArea,topProjectedArea,bottomProjectedArea,overhangArea,triangles:positions.length/9,openEdges,nonManifold,inconsistent,degenerate,watertight:!openEdges&&!nonManifold&&!inconsistent&&!degenerate&&volume>0,warnings};
 }
 export function analyseFile(buffer:ArrayBuffer,name:string):Analysis{
- if(buffer.byteLength>MAX_FILE)throw Error('File exceeds 80 MB.');
+ if(buffer.byteLength>MAX_FILE)throw Error('File exceeds 160 MB.');
  if(/\.stl$/i.test(name))return {...analysePositions(parseSTL(buffer)),parts:1,plates:[],sliced:false};
  if(/\.3mf$/i.test(name)){const p=parse3MF(buffer),a=p.positions.length?analysePositions(p.positions):{positions:p.positions,dimensions:[0,0,0] as [number,number,number],volume:0,area:0,triangles:0,openEdges:0,nonManifold:0,inconsistent:0,degenerate:0,watertight:false,warnings:[]};return {...a,...p,warnings:[...p.warnings,...a.warnings]};}
  throw Error('Unsupported model format.');
