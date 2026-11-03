@@ -1,0 +1,58 @@
+[
+  {
+    "name": "single-colour",
+    "referenceGrams": 3.656038284301758,
+    "referenceSeconds": 827.6547241210938,
+    "geometryGrams": 3.6368639999999997,
+    "geometrySeconds": 481.06666666666666,
+    "materialErrorPercent": -0.5244552384500023,
+    "timeErrorPercent": -41.8759232991121,
+    "legacyMaterialErrorPercent": -22.55354622084425,
+    "legacyTimeErrorPercent": -54.747635406653515,
+    "slicerReadMaterialErrorPercent": 0.10836089204134117,
+    "slicerReadTimeErrorPercent": -0.07910594865377192,
+    "incomplete": true
+  },
+  {
+    "name": "supported",
+    "referenceGrams": 3.8972995281219482,
+    "referenceSeconds": 1278.707763671875,
+    "geometryGrams": 3.646750464,
+    "geometrySeconds": 482.3744,
+    "materialErrorPercent": -6.428786453646894,
+    "timeErrorPercent": -62.2764157922341,
+    "legacyMaterialErrorPercent": -30.942331412311567,
+    "legacyTimeErrorPercent": -72.15914299466529,
+    "slicerReadMaterialErrorPercent": 0.06929084763862085,
+    "slicerReadTimeErrorPercent": -0.05534991590593149,
+    "incomplete": true
+  },
+  {
+    "name": "multicolour",
+    "referenceGrams": 4.776310920715332,
+    "referenceSeconds": 1639.600341796875,
+    "geometryGrams": 1.440432,
+    "geometrySeconds": 190.53333333333333,
+    "materialErrorPercent": -69.84216429980083,
+    "timeErrorPercent": -88.37928192156123,
+    "legacyMaterialErrorPercent": -78.02213429098151,
+    "legacyTimeErrorPercent": -91.53126955431343,
+    "slicerReadMaterialErrorPercent": 0.07723700039434862,
+    "slicerReadTimeErrorPercent": -0.03661513001498108,
+    "incomplete": true
+  },
+  {
+    "name": "three-colour",
+    "referenceGrams": 32.15521025657654,
+    "referenceSeconds": 6652.53466796875,
+    "geometryGrams": 2.1606479999999997,
+    "geometrySeconds": 285.8,
+    "materialErrorPercent": -93.2805664066274,
+    "timeErrorPercent": -95.70389311346099,
+    "legacyMaterialErrorPercent": -95.08448432652767,
+    "legacyTimeErrorPercent": -96.8572379736704,
+    "slicerReadMaterialErrorPercent": -0.016203459828019257,
+    "slicerReadTimeErrorPercent": -0.00803705648201083,
+    "incomplete": true
+  }
+]

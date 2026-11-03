@@ -1,0 +1,13 @@
+; HEADER_BLOCK_START
+; BambuStudio 02.08.02.61
+; model printing time: 16m 10s; total estimated time: 21m 18s
+; total layer number: 160
+; total filament length [mm] : 1285.96
+; total filament volume [cm^3] : 3093.10
+; total filament weight [g] : 3.90
+; filament_density: 1.26
+; filament_diameter: 1.75
+; max_z_height: 32.00
+; filament: 1
+; support_material_on_wipe_tower: 0
+; HEADER_BLOCK_END

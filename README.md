@@ -24,7 +24,7 @@ Vite's base path is `/created3d-auto-pricing/`. Open that path when using a loca
 
 1. Upload STL, 3MF or an image; alternatively try the real sample coaster or enter manual values.
 2. Inspect dimensions and topology. Choose the printer, nozzle, material, quality, infill, supports and quantity.
-3. Review the estimate classification and assumptions. Unsliced meshes use an approximate volume/surface model, **not slicing**.
+3. Review the estimate classification and assumptions. Unsliced meshes use labelled Geometry estimates with separate walls/skins/infill and explicit time budgets, **not slicing**. Unknown time/waste stays flagged; customer export requires review, a complete planning range or a measured reference.
 4. Set measured-average printer power and hands-on time in Pricing settings; these default to zero and are flagged as excluded.
 5. Choose Customer (costs/margins hidden) or Internal, then copy the quotation or download a PDF.
 
@@ -71,7 +71,7 @@ Design, order setup, fixed payment fees and overhead are charged once per order.
 
 - Binary and ASCII STL, including binary files whose header begins with `solid`. STL units are assumed millimetres; scale is editable.
 - Core 3MF geometry with mesh objects, component instances, external production-extension model files, build transforms and supported units. Multipart geometry is previewed in a single display colour.
-- Bambu `Metadata/slice_info.config`: positive numeric plate prediction in seconds and total weight in grams, with a matching nonempty `plate_N.gcode`. Per-filament `used_g` is a fallback if a total weight is absent. Metadata is not authenticated and does not prove that a job will print successfully.
+- Bambu `Metadata/slice_info.config`: positive numeric plate prediction in seconds and total weight in grams, with provenance recorded for any matching `plate_N.gcode`. Per-filament `used_g` is a fallback if a total weight is absent. Complete saved metadata without G-code is explicitly marked for confirmation. Bambu G-code total-time and weight headers are also supported; conflicting summaries are rejected. Metadata is not authenticated and does not prove that a job will print successfully.
 - Unsliced 3MF files never acquire invented print statistics. Unsupported or incomplete summaries fall back to geometry/manual input.
 - JPG/JPEG/PNG/WEBP are preview-only references. Intended dimensions, product type, complexity, colours, grams, hours and optional design cost are collected. Images never convert automatically to 3D and always remain preliminary.
 - Limits: 80 MB models, 20 MB images, 40 MP decoded images, 400,000 expanded triangles, 2,000 ZIP entries, 100 MB per ZIP entry, 220 MB total declared expansion, 45-second cancellable worker timeout. Unsupported ZIP64, encryption, unsafe paths, XML DTDs/entities and circular/missing components are rejected.
@@ -82,7 +82,7 @@ Design, order setup, fixed payment fees and overhead are charged once per order.
 
 X2D, H2D, X1 Carbon, P1S, P2S, A1 and A1 mini are selectable. Hardware envelopes and supported nozzle diameters use official Bambu material and profile data. This app does **not** claim to reproduce Bambu's full slicing/performance profiles. The original Z orientation is retained; automatic arrangement/rotation is not performed.
 
-See [printer sources](docs/printer-sources.md), [slicing feasibility](docs/browser-slicing.md) and [validation](docs/validation.md).
+See [estimation audit](docs/estimation-audit.md), [actual benchmarks](docs/benchmark-results.md), [printer sources](docs/printer-sources.md), [slicing feasibility](docs/browser-slicing.md) and [validation](docs/validation.md).
 
 ## Deployment
 
@@ -92,8 +92,16 @@ In repository **Settings → Pages → Build and deployment**, Source must be **
 
 ## Current limitations
 
-Real browser slicing is **not enabled**. Material and time estimates for unsliced models are uncalibrated unless you explicitly enter a matching Bambu Studio reference. No Bambu Studio accuracy benchmark has been completed; synthetic fixtures validate parsing and calculations, not slicer accuracy.
+Real browser slicing is **not enabled**. Material and time estimates for unsliced models are uncalibrated unless you explicitly enter a matching Bambu Studio reference. Four genuine Bambu Studio 02.08.02.61 CLI reference cases now cover single-colour, supported, dual-nozzle two-colour and three-colour jobs. Signed errors are reported in [benchmark results](docs/benchmark-results.md). They expose large unbudgeted geometry errors and are not shipped as default calibration. The specific Gengar file has not been supplied for verification.
 
 No per-layer support generation, toolpath planning, acceleration simulation, automatic AMS purge calculation, prime-tower geometry, painted-colour rendering, negative-volume/modifier evaluation or mixed-material rate allocation is performed. Use final Bambu Studio statistics for production quotes. All recorded filament in a selected plate is costed at one chosen material rate.
 
 PDF quotations use rasterized browser text for multilingual names; PDF text is not selectable/searchable. Tax and shipping are excluded unless entered as explicit costs. The public site and repository have no access protection.
+
+## Estimator accuracy update
+
+Geometry time is no longer presented as reliable based on flow or triangles alone. Add explicit preparation/travel/acceleration/cooling and tool/AMS budgets, enter a planning range, or use real stored slice totals. Colour count can be unknown; the preview is deliberately monochrome.
+
+Separate measured calibration records bind printer, material, nozzle and quality plus relevant settings. Unverified factors and legacy algorithm factors are not labelled calibrated. No arbitrary price uplift or default uncertainty multiplier was introduced.
+
+The full [audit](docs/estimation-audit.md) explains mass/time assumptions, provenance, cost deduplication, ranges, actual reference reproduction and remaining limitations.

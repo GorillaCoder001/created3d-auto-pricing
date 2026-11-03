@@ -7,7 +7,8 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
-    "preview": "vite preview --host 0.0.0.0"
+    "preview": "vite preview --host 0.0.0.0",
+    "benchmark:report": "node scripts/benchmark-report.mjs"
   },
   "dependencies": {
     "react": "19.1.1",
@@ -27,7 +28,8 @@
     "vite": "6.4.4",
     "vitest": "4.1.11",
     "tailwindcss": "4.1.18",
-    "@tailwindcss/vite": "4.1.18"
+    "@tailwindcss/vite": "4.1.18",
+    "@types/node": "22.20.5"
   },
   "engines": {
     "node": ">=22.12.0"

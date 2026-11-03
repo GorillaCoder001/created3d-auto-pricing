@@ -1,0 +1,142 @@
+solid benchmark
+facet normal 0 0 0
+outer loop
+vertex 0 0 0
+vertex 8 0 0
+vertex 8 0 24
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 8 12 24
+vertex 8 12 0
+vertex 0 12 0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 0 0 0
+vertex 8 0 24
+vertex 0 0 32
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 0 12 32
+vertex 8 12 24
+vertex 0 12 0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 8 0 24
+vertex 32 0 24
+vertex 32 0 32
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 32 12 32
+vertex 32 12 24
+vertex 8 12 24
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 8 0 24
+vertex 32 0 32
+vertex 0 0 32
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 0 12 32
+vertex 32 12 32
+vertex 8 12 24
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 0 0 0
+vertex 0 12 0
+vertex 8 12 0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 0 0 0
+vertex 8 12 0
+vertex 8 0 0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 8 0 0
+vertex 8 12 0
+vertex 8 12 24
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 8 0 0
+vertex 8 12 24
+vertex 8 0 24
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 8 0 24
+vertex 8 12 24
+vertex 32 12 24
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 8 0 24
+vertex 32 12 24
+vertex 32 0 24
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 32 0 24
+vertex 32 12 24
+vertex 32 12 32
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 32 0 24
+vertex 32 12 32
+vertex 32 0 32
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 32 0 32
+vertex 32 12 32
+vertex 0 12 32
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 32 0 32
+vertex 0 12 32
+vertex 0 0 32
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 0 0 32
+vertex 0 12 32
+vertex 0 12 0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 0 0 32
+vertex 0 12 0
+vertex 0 0 0
+endloop
+endfacet
+endsolid benchmark

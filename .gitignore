@@ -154,3 +154,7 @@ dist/
 *.local
 
 mobile-qa.html
+
+.benchmark-output/
+
+__pycache__/

@@ -19,4 +19,4 @@ export function compatibility(dimensions:[number,number,number],c:Config){
  if(p.excluded&&!(d[0]<=size[0]-p.excluded[0]||d[1]<=size[1]-p.excluded[1]))return {fits:false,message:'Bounding box cannot clear the cutter exclusion. Verify mesh placement in Bambu Studio.'};
  return {fits:true,message:'Within nominal build area. Confirm placement, skirts, purge tower and clearances in Bambu Studio.'};
 }
-export const calibrationKey=(c:Config)=>[c.printer,c.nozzle,c.material,c.layer,c.infill,c.supports,c.walls,c.quality,c.dual].join('|');
+export const calibrationKey=(c:Config)=>['surface-v2',c.printer,c.material,c.nozzle,c.quality].join('|');

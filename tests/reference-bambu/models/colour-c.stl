@@ -1,0 +1,86 @@
+solid benchmark
+facet normal 0 0 0
+outer loop
+vertex 24 0 0
+vertex 34 10 0
+vertex 34 0 0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 24 0 0
+vertex 24 10 0
+vertex 34 10 0
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 24 0 10
+vertex 34 0 10
+vertex 34 10 10
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 24 0 10
+vertex 34 10 10
+vertex 24 10 10
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 24 0 0
+vertex 34 0 0
+vertex 34 0 10
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 24 0 0
+vertex 34 0 10
+vertex 24 0 10
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 34 0 0
+vertex 34 10 0
+vertex 34 10 10
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 34 0 0
+vertex 34 10 10
+vertex 34 0 10
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 34 10 0
+vertex 24 10 0
+vertex 24 10 10
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 34 10 0
+vertex 24 10 10
+vertex 34 10 10
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 24 10 0
+vertex 24 0 0
+vertex 24 0 10
+endloop
+endfacet
+facet normal 0 0 0
+outer loop
+vertex 24 10 0
+vertex 24 0 10
+vertex 24 10 10
+endloop
+endfacet
+endsolid benchmark

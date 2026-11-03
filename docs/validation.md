@@ -23,3 +23,9 @@ Production deployment must additionally have a successful GitHub Actions Pages r
 - The 390 px embedded mobile viewport stacked cards without horizontal clipping. The test browser lacks WebGL; the interactive canvas fallback was visible.
 - Both internal and customer PDFs were generated directly through the production export function in a Node canvas harness, checked for valid A4 PDF structure and raster-rendered for inspection. Browser generation produced a valid save link; this automation browser did not deliver a download event, so end-to-end browser download capture remains unverified. Its policy also blocks opening local blob URLs. No workaround was used for that blocked browser operation.
 - No real Bambu Studio benchmark was performed. Accuracy remains unverified for geometry estimates and calibration remains user-supplied.
+
+## Estimator audit update
+
+The current release adds actual Bambu Studio 02.08.02.61 native CLI references for four original generated models. See [the benchmark results](benchmark-results.md) for signed material/time errors and [the audit](estimation-audit.md) for the exact assumptions. Earlier statements in the initial-release history about missing Bambu benchmarks are historical.
+
+All four actual native 3MF outputs were parsed locally end to end: positive G-code totals were selected, used-filament counts were 1/1/2/3, and geometry previews remained valid. Original supports/purge/tower/preparation were not added again. Header extraction is verified independently against native result.json with display-rounding tolerances.
