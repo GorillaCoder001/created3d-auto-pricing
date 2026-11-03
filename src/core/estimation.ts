@@ -13,8 +13,33 @@ export function batchChangeMinutes(c:Config){
  return (c.amsChanges*c.amsSeconds+c.toolChanges*c.toolSeconds)/60;
 }
 export function estimateGeometry(a:Analysis,c:Config,s:Settings):Estimate{
- if(!a.watertight||a.volume<=0)throw Error('Geometry is open, non-manifold or inconsistently oriented. Enter manual grams and hours, or upload a sliced 3MF.');
- if(a.geometryBlocked)throw Error(a.geometryBlocked);
+ if(!a.watertight||a.volume<=0||a.geometryBlocked){
+  // Recovery estimate for valid-looking but unsliceable geometry. Never assume
+  // face winding or modifier parts describe printable solid volume.
+  const dims=a.dimensions.map(n=>n*c.scale/100);
+  if(dims.some(n=>!Number.isFinite(n)||n<=0||n>2000)||!a.triangles)throw Error('Geometry has no usable positive dimensions. Supply a repaired model or saved slice.');
+  const envelope=dims[0]*dims[1]*dims[2]; // mm³, orientation-dependent
+  const isFlat=Math.min(...dims)/Math.max(...dims)<0.09;
+  const occupied=isFlat?0.72:0.24;
+  const fraction=isFlat?0.58:0.25;
+  const density=c.density||s.density[c.material];
+  const modelGrams=Math.max(0.5,envelope*occupied*fraction*density/1000);
+  const supportGrams=c.supports?(c.supportGrams>0?c.supportGrams:modelGrams*c.supportPercent/100):0;
+  const grams=modelGrams+supportGrams+c.brimGrams+c.purgeGrams;
+  const flowHours=(grams/density*1000)/s.effectiveFlow/3600;
+  const knownDelay=(c.travelMinutes+c.accelerationMinutes+c.coolingMinutes+c.preparationMinutes+batchChangeMinutes(c))/60;
+  const hours=Math.max(0.25,flowHours*1.5+knownDelay);
+  const batchHours=(c.preparationMinutes+batchChangeMinutes(c))/60+c.purgeGrams/density*1000/s.effectiveFlow/3600;
+  const reason=a.geometryBlocked?'3MF contains modifiers/negative or nonstandard parts whose subtraction and process rules were NOT applied.':'Mesh contains open boundaries, inconsistent winding or non-manifold edges. True solid volume is unreliable.';
+  return {modelGrams,supportGrams,purgeGrams:c.purgeGrams,grams,hours,classification:'Preliminary estimate',basis:'geometry',scope:'One model · approximate envelope fallback',batchGrams:c.purgeGrams,batchHours,incomplete:true,range:{gramsLow:Math.max(0.1,grams*0.35),gramsHigh:grams*3,hoursLow:Math.max(0.1,hours*0.4),hoursHigh:hours*3.5,complete:true},notes:[
+    'LOW CONFIDENCE · envelope-based fallback, NOT slicing or a verified material measurement.',
+    reason,
+    `Using the model bounds ${dims.map(n=>n.toFixed(1)).join(' × ')} mm, an illustrative ${(occupied*100).toFixed(0)}% occupied envelope and ${(fraction*100).toFixed(0)}% printable fraction. These values are assumptions, not inferred shell thickness.`,
+    'The displayed range is a wide what-if scenario, NOT a guaranteed accuracy or statistical confidence range. Topology, negative volumes, hollows, per-part slicing and colours may change actual grams and hours dramatically.',
+    'Support, brim, purge and switching need slicer confirmation. Do not issue a customer quote from this fallback; use a repaired model or Bambu Studio slice.'
+  ]};
+ }
+
  const scale=c.scale/100,volume=a.volume*scale**3;
  if(a.sideArea===undefined||a.topProjectedArea===undefined||a.bottomProjectedArea===undefined)throw Error('Re-upload this model to update its geometry analysis.');
  // First-order inward shell volumes. These are orientation-aware surface integrals, not offsets/toolpaths.
