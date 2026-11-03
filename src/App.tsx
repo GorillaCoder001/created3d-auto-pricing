@@ -81,7 +81,8 @@ function App(){
  },[config,settings,analysis,mode,plateId,manualGrams,manualHours,batchScope,image,imageDimensions,product,complexity,filename,busy,revision,planningRange]);
  const {estimate,price}=result;
  const priceRange='priceRange' in result?result.priceRange:undefined;
- const quoteReady=!!price&&(image||analysis&&(!analysis.watertight||!!analysis.geometryBlocked)?quoteInternal:(!estimate?.incomplete||!!estimate.range?.complete||quoteInternal));
+ const isUnverifiedFallback=!!image||(mode==='geometry'&&!!analysis&&(!analysis.watertight||!!analysis.geometryBlocked));
+ const quoteReady=!!price&&(isUnverifiedFallback?quoteInternal:(!estimate?.incomplete||!!estimate.range?.complete||quoteInternal));
  useEffect(()=>{quoteToken.current++;setPdfUrl('');},[estimate,price,name,quoteInternal]);
  useEffect(()=>()=>{if(pdfUrl)URL.revokeObjectURL(pdfUrl);},[pdfUrl]);
  const fit=analysis?.positions.length?compatibility(analysis.dimensions,config):null,size=buildSize(config),locked=mode==='slicer';
