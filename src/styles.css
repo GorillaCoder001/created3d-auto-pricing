@@ -9,3 +9,4 @@
 /* Keep cost information readable on everyday office displays. */
 .software-canvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}.software-canvas:active{cursor:grabbing}.cost-row{color:#6e7b94;font-size:11px}.cost-row strong{color:#5d6c88;font-size:11px}.field>span{color:#5c6d88}.intro p{color:#78859c}.price-hero>p{color:#81789a}.price-hero .eyebrow{color:#827695}.badge.purple{color:#8160af}.subheading{color:#8390a8}.pricing-note{color:#8b98ad}.pricing-note strong{color:#7688a4}.drop-button small{color:#8c96ae}.small-label{color:#8390a6}.preview-help{color:#8493ac}.quote-actions>p{color:#8a96ad}.quote-metrics span{color:#8793ac}.compatibility{color:#7b8ba4}.cost-row.manufacturing{font-size:11px}.model-stats span{color:#8995ad}.live-indicator{color:#7e8fa8}
 .pdf-ready{display:flex;margin-top:8px;border-color:#c8ddd1!important;background:#f0f8f3!important;color:#638d76!important}
+.local-tag svg{color:#48a8c5}.quote-metrics svg{color:#88adc5}
