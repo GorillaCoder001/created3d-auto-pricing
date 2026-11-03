@@ -147,3 +147,10 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+node_modules/
+dist/
+.openai/
+*.local
+
+mobile-qa.html

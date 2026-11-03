@@ -1,0 +1,109 @@
+{
+  "checked": "2026-11-03",
+  "profiles": [
+    {
+      "name": "Bambu Lab X2D.json",
+      "url": "https://github.com/bambulab/BambuStudio/blob/master/resources/profiles/BBL/machine/Bambu%20Lab%20X2D.json",
+      "blob_sha": "1bb03e2cdc9345af57e9eb1c67e1e8515d6b5f44",
+      "nozzle_diameter": "0.4;0.2;0.6;0.8"
+    },
+    {
+      "name": "Bambu Lab X2D 0.4 nozzle.json",
+      "url": "https://github.com/bambulab/BambuStudio/blob/master/resources/profiles/BBL/machine/Bambu%20Lab%20X2D%200.4%20nozzle.json",
+      "blob_sha": "e381fbdbee451037244f69dfb57746c83ff5e154",
+      "default_print_profile": "0.20mm Standard @BBL X2D",
+      "nozzle_diameter": [
+        "0.4",
+        "0.4"
+      ],
+      "printable_area": [
+        "0x0",
+        "256x0",
+        "256x256",
+        "0x256 "
+      ],
+      "printable_height": "261",
+      "extruder_printable_area": [
+        "0x0,256x0,256x256,0x256",
+        "20.5x0,256x0,256x256,20.5x256"
+      ],
+      "extruder_printable_height": [
+        "261",
+        "256"
+      ]
+    },
+    {
+      "name": "Bambu Lab H2D 0.4 nozzle.json",
+      "url": "https://github.com/bambulab/BambuStudio/blob/master/resources/profiles/BBL/machine/Bambu%20Lab%20H2D%200.4%20nozzle.json",
+      "blob_sha": "160f43c54abab6bc09e7ece58243ed28582a5dc5",
+      "nozzle_diameter": [
+        "0.4",
+        "0.4"
+      ],
+      "printable_area": [
+        "0x0",
+        "350x0",
+        "350x320",
+        "0x320"
+      ],
+      "extruder_printable_area": [
+        "0x0,325x0,325x320,0x320",
+        "25x0,350x0,350x320,25x320"
+      ]
+    },
+    {
+      "name": "Bambu Lab P2S 0.4 nozzle.json",
+      "url": "https://github.com/bambulab/BambuStudio/blob/master/resources/profiles/BBL/machine/Bambu%20Lab%20P2S%200.4%20nozzle.json",
+      "blob_sha": "bbb14349d2133e7f25a0efa11ddb9e3ddacb49d2",
+      "default_print_profile": "0.20mm Standard @BBL P2S",
+      "nozzle_diameter": [
+        "0.4"
+      ],
+      "printable_height": "256"
+    },
+    {
+      "name": "Bambu Lab X1 Carbon 0.4 nozzle.json",
+      "url": "https://github.com/bambulab/BambuStudio/blob/master/resources/profiles/BBL/machine/Bambu%20Lab%20X1%20Carbon%200.4%20nozzle.json",
+      "blob_sha": "f208c2e5fdb1dff67308a230cbd4104cf02ceec2",
+      "default_print_profile": "0.20mm Standard @BBL X1C",
+      "nozzle_diameter": [
+        "0.4"
+      ]
+    },
+    {
+      "name": "Bambu Lab P1S 0.4 nozzle.json",
+      "url": "https://github.com/bambulab/BambuStudio/blob/master/resources/profiles/BBL/machine/Bambu%20Lab%20P1S%200.4%20nozzle.json",
+      "blob_sha": "960814b8812d2a8308da3eec28bfc45bb323103d",
+      "default_print_profile": "0.20mm Standard @BBL X1C",
+      "nozzle_diameter": [
+        "0.4"
+      ]
+    },
+    {
+      "name": "Bambu Lab A1 0.4 nozzle.json",
+      "url": "https://github.com/bambulab/BambuStudio/blob/master/resources/profiles/BBL/machine/Bambu%20Lab%20A1%200.4%20nozzle.json",
+      "blob_sha": "ad543aa32f83f33efe9807555ec5aac84f2568b9",
+      "default_print_profile": "0.20mm Standard @BBL A1",
+      "nozzle_diameter": [
+        "0.4"
+      ],
+      "printable_height": "256"
+    },
+    {
+      "name": "Bambu Lab A1 mini 0.4 nozzle.json",
+      "url": "https://github.com/bambulab/BambuStudio/blob/master/resources/profiles/BBL/machine/Bambu%20Lab%20A1%20mini%200.4%20nozzle.json",
+      "blob_sha": "c4907fd48ed597a98ecf1cb7d797fb8d480d0015",
+      "default_print_profile": "0.20mm Standard @BBL A1M",
+      "nozzle_diameter": [
+        "0.4"
+      ],
+      "printable_area": [
+        "0x0",
+        "180x0",
+        "180x180",
+        "0x180"
+      ],
+      "printable_height": "180"
+    }
+  ]
+}
