@@ -12,6 +12,15 @@ describe('transparent SGD pricing',()=>{
  it('uses the confirmed defaults',()=>{expect(defaults.electricity).toBe(.31);expect(defaults.margin).toBe(35);expect(defaults.minimum).toBe(5);});
  it('calculates material, machine, electricity and margin, not markup',()=>{const s=settings();s.powerWatts.X2D=200;const p=calculatePrice(manual,config(),s);expect(p.material).toBe(2.5);expect(p.machine).toBe(3);expect(p.electricity).toBeCloseTo(.124);expect(p.total).toBe(8.66);expect(p.actualMargin).toBeGreaterThanOrEqual(35);});
  it('sets unconfirmed power and hands-on time to zero',()=>{const p=calculatePrice(manual,config(),settings());expect(p.electricity).toBe(0);expect(p.labour).toBe(0);});
+ it('prices a Bambu Studio manual result using grams and hours plus minutes',()=>{
+  const grams=38.33,hours=2+15/60;
+  const p=calculatePrice({...manual,grams,modelGrams:grams,hours},config(),settings());
+  expect(p.grams).toBe(38.33);
+  expect(p.hours).toBe(2.25);
+  expect(p.material).toBeCloseTo(38.33/1000*25);
+  expect(p.machine).toBeCloseTo(2.25*1.5);
+  expect(p.total).toBe(6.67);
+ });
  it('enforces a S$5 order minimum',()=>expect(calculatePrice({...manual,grams:1,modelGrams:1,hours:.01},config(),settings()).total).toBe(5));
  it('solves percentage and fixed payment fees inside the margin equation',()=>{const s=settings();s.feeFixed=.5;s.feePercent=3;const p=calculatePrice(manual,config(),s);expect(p.total).toBe(9.68);expect(p.fees).toBeCloseTo(.7904);expect(p.actualMargin).toBeGreaterThanOrEqual(35);});
  it('charges design, overhead and setup once for multiple items',()=>{const s=settings();Object.assign(s,{design:10,overhead:2,setupMinutes:20,unitMinutes:2,batchMinutes:3,packaging:1});const p=calculatePrice(manual,{...config(),quantity:5,unitsPerBatch:2},s);expect(p.design).toBe(10);expect(p.overhead).toBe(2);expect(p.packaging).toBe(5);expect(p.labour).toBeCloseTo(9.75);expect(p.hours).toBe(10);expect(p.batches).toBe(3);});
