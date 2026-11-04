@@ -4,7 +4,7 @@ import {calculatePrice,geometryEstimate,validateSettings,validateConfig} from '.
 import {compatibility,buildSize,calibrationKey} from '../src/core/printers';
 import {defaults,defaultConfig,type Estimate,type Analysis} from '../src/core/types';
 import {createCalibration} from '../src/core/estimation';
-import {quotationText} from '../src/core/quotation';
+import {quotationText,customerBreakdown} from '../src/core/quotation';
 import {archive,asciiSTL,binarySTL,tetraPositions,threeMF,meshXML,modelXML,sliceXML} from './fixtures';
 const manual:Estimate={grams:100,modelGrams:100,supportGrams:0,purgeGrams:0,hours:2,classification:'Manual estimate',scope:'One item · manual totals',notes:[]};
 const settings=()=>structuredClone(defaults),config=()=>({...defaultConfig});
@@ -58,5 +58,19 @@ describe('printer profiles and estimates',()=>{
  it('adds explicit multicolour support and purge allowances',()=>{const a={...analysePositions(tetraPositions),parts:1,plates:[],sliced:false} as Analysis;const e=geometryEstimate(a,{...config(),supports:true,supportPercent:20,colours:4,purgeGrams:10,changeMinutes:5},settings());expect(e.supportGrams).toBeCloseTo(e.modelGrams*.2);expect(e.purgeGrams).toBe(10);expect(e.notes.join(' ')).toContain('Counts alone');});
 });
 describe('quotation privacy',()=>{
- it('hides costs and margins from a customer quotation',()=>{const s=settings(),c=config(),p=calculatePrice(manual,c,s),customer=quotationText('Coaster',c,manual,p,s,false),internal=quotationText('Coaster',c,manual,p,s,true);expect(customer).toContain('CUSTOMER QUOTATION');expect(customer).toContain('SGD');expect(customer).not.toContain('Estimated profit');expect(customer).not.toContain('Net margin');expect(internal).toContain('Estimated profit');expect(internal).toContain('Net margin');});
+ it('hides costs and margins from a customer quotation',()=>{const s=settings(),c=config(),p=calculatePrice(manual,c,s),customer=quotationText('Coaster',c,manual,p,s,false),internal=quotationText('Coaster',c,manual,p,s,true);expect(customer).toContain('CUSTOMER QUOTATION');expect(customer).toContain('SGD');expect(customer).toContain('PRICE BREAKDOWN');expect(customer).not.toContain('ASSUMPTIONS');expect(customer).not.toContain('Estimated profit');expect(customer).not.toContain('Net margin');expect(customer).not.toContain('Electricity tariff');expect(internal).toContain('ASSUMPTIONS');expect(internal).toContain('Estimated profit');expect(internal).toContain('Net margin');});
+ it('customer breakdown adds up to the advertised order total without revealing net profit',()=>{
+  const s=settings(),c=config();Object.assign(s,{design:10,setupMinutes:30,packaging:2,feeFixed:0.5});
+  const p=calculatePrice(manual,c,s);const lines=customerBreakdown(p);
+  expect(Math.round(lines.reduce((sum,[,v])=>sum+v,0)*100)).toBe(Math.round(p.total*100));
+  const customer=quotationText('Custom print',c,manual,p,s,false);
+  expect(customer).toContain('Production & handling');
+  expect(customer).not.toContain('Total manufacturing');
+  expect(customer).not.toContain('Failure reserve');
+ });
+ it('customer breakdown respects minimum-order pricing',()=>{
+  const p=calculatePrice({...manual,grams:1,modelGrams:1,hours:0.01},config(),settings());
+  expect(Math.round(customerBreakdown(p).reduce((sum,[,v])=>sum+v,0)*100)).toBe(500);
+ });
+
 });
