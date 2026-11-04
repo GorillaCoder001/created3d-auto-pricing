@@ -1,3 +1,5 @@
+import type {Config,Settings} from './types';
+import type {PhotoShape} from './photo-analysis';
 /** Product-aware photo assumptions. These are provisional archetypes, NOT image dimensions. */
 export type ProductKind='Charm / keychain'|'Cup / mug'|'Figurine / toy'|'Bookmark / flat item'|'Phone stand'|'Bottle / vase'|'Other / unknown';
 export type Recognition={kind:ProductKind;source:'vision'|'filename'|'manual'|'unknown';confidence?:number;detail:string};
@@ -74,4 +76,26 @@ export async function classifyInBrowser(blobUrl:string):Promise<Recognition>{
  const classifier=await pipelinePromise;
  const predictions=await classifier(blobUrl,candidates.map(([name])=>name));
  return normalizeRecognition(predictions);
+}
+
+/** Archetype-based cost scenario. This estimates neither measured volume nor toolpaths. */
+export function productPhotoEstimate(kind:ProductKind,dim:[number,number,number],complexity:string,c:Config,s:Settings,shape:PhotoShape|null){
+ if(kind==='Other / unknown')throw Error('Choose a product category to create a preliminary estimate.');
+ const [w,d,h]=dim;
+ if([w,d,h].some(v=>!Number.isFinite(v)||v<=0||v>1000))throw Error('Confirm valid width, depth and height (1–1,000 mm).');
+ const occupancy:Record<Exclude<ProductKind,'Other / unknown'>,number>={
+  'Charm / keychain':.43,
+  'Cup / mug':.085,
+  'Figurine / toy':.095,
+  'Bookmark / flat item':.68,
+  'Phone stand':.075,
+  'Bottle / vase':.065
+ };
+ const density=c.density||s.density[c.material];
+ const factor=complexity==='High'?1.22:complexity==='Low'?.85:1;
+ const silhouette=shape?.status==='detected'?Math.max(.8,Math.min(1.2,shape.fill/.62)):1;
+ const grams=Math.max(1,w*d*h/1000*occupancy[kind]*density*factor*silhouette*(c.supports?1.16:1));
+ const depositionHours=grams/density*1000/Math.max(.5,s.effectiveFlow)/3600;
+ const hours=Math.max(.2,depositionHours*1.5+.30+(c.supports?.25:0));
+ return {grams,hours,lowGrams:grams*.6,highGrams:grams*1.9,lowHours:hours*.65,highHours:hours*2.2};
 }
