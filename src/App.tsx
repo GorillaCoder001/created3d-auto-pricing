@@ -8,28 +8,10 @@ import {buildSize,calibrationKey,compatibility,printers} from './core/printers';
 import {calculatePrice,calculatePriceRange,displayMass,displayTime,approximate,duration,geometryEstimate,money,validateSettings} from './core/pricing';
 import {analysePositions,MAX_FILE,sampleCoaster} from './core/files';
 import {downloadPDF,quotationText} from './core/quotation';
-import {inspectPhoto,proposedPhotoDimensions,type PhotoShape} from './core/photo-analysis';
+import {inspectPhoto,type PhotoShape} from './core/photo-analysis';
+import {classifyInBrowser,kinds,nameHint,sizePreset,productPhotoEstimate,type Recognition,type ProductKind} from './core/product-recognition';
 const Preview=lazy(()=>import('./components/Preview'));
 
-// Photos have no physical scale, hidden geometry or slice paths. These are editable
-// category assumptions, NOT computer-vision measurements or slicing statistics.
-function photoPlanningEstimate(dim:[number,number,number],product:string,complexity:string,c:Config,s:PricingSettings,shape:PhotoShape|null){
- const [w,d,h]=dim;
- if([w,d,h].some(v=>!Number.isFinite(v)||v<=0||v>1000))throw Error('Enter valid dimensions from 1 to 1,000 mm.');
- const envelope=w*d*h/1000; // cm³
- const flat=product==='Flat product / coaster';
- const occupancy=(flat?0.78:product==='Functional part'?0.28:product==='Figurine / decorative'?0.32:0.30)*(shape?.status==='detected'?Math.max(.55,Math.min(1.3,shape.fill/.66)):1);
- const solidFraction=flat?0.48:product==='Functional part'?0.34:0.23;
- const complexityFactor=(complexity==='High'?1.3:complexity==='Low'?0.8:1)*(shape?.status==='detected'?Math.min(1.15,1+shape.edgeDensity*.4):1);
- const density=s.density[c.material];
- // Include a provisional support contribution, but do not assert supports exist.
- const supportFactor=c.supports?1.18:1;
- const grams=Math.max(2,envelope*occupancy*solidFraction*density*complexityFactor*supportFactor);
- const depositionHours=(grams/density*1000)/Math.max(0.5,s.effectiveFlow)/3600;
- const hours=Math.max(0.25,depositionHours*1.35+0.35+(c.supports?0.3:0));
- // The bounds are illustrative planning scenarios, not statistical confidence limits.
- return {grams,hours,lowGrams:grams*0.55,highGrams:grams*2.25,lowHours:hours*0.6,highHours:hours*2.7};
-}
 const THEME_STORAGE='created3d.theme.v1';
 function loadTheme(): 'light'|'dark' {try{return localStorage.getItem(THEME_STORAGE)==='dark'?'dark':'light';}catch{return 'light';}}
 const STORAGE='created3d.pricing.v1';
@@ -37,7 +19,7 @@ function loadSettings(){try{const raw=localStorage.getItem(STORAGE);return raw?v
 function App(){
  const [theme,setTheme]=useState<'light'|'dark'>(loadTheme);
  useEffect(()=>{document.documentElement.dataset.theme=theme;document.documentElement.style.colorScheme=theme;try{localStorage.setItem(THEME_STORAGE,theme);}catch{/* Storage may be disabled. */}},[theme]);
- const [photoShape,setPhotoShape]=useState<PhotoShape|null>(null),[settings,setSettings]=useState(loadSettings),[config,setConfig]=useState<Config>({...defaultConfig}),[analysis,setAnalysis]=useState<Analysis|null>(null),[filename,setFilename]=useState(''),[name,setName]=useState(''),[image,setImage]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[settingsOpen,setSettingsOpen]=useState(false),[infoOpen,setInfoOpen]=useState(false),[mode,setMode]=useState<'geometry'|'slicer'|'manual'>('geometry'),[plateId,setPlateId]=useState(1),[manualGrams,setManualGrams]=useState(0),[manualHours,setManualHours]=useState(0),[batchScope,setBatchScope]=useState(false),[quoteInternal,setQuoteInternal]=useState(false),[pdfUrl,setPdfUrl]=useState(''),[pdfName,setPdfName]=useState(''),[exporting,setExporting]=useState(false),[dragging,setDragging]=useState(false),[imageDimensions,setImageDimensions]=useState<[number,number,number]>([0,0,0]),[product,setProduct]=useState('Figurine / decorative'),[complexity,setComplexity]=useState('Medium'),[planningRange,setPlanningRange]=useState({...emptyRange}),[revision,setRevision]=useState(0);
+ const [photoShape,setPhotoShape]=useState<PhotoShape|null>(null),[recognition,setRecognition]=useState<Recognition|null>(null),[recognizing,setRecognizing]=useState(false),[settings,setSettings]=useState(loadSettings),[config,setConfig]=useState<Config>({...defaultConfig}),[analysis,setAnalysis]=useState<Analysis|null>(null),[filename,setFilename]=useState(''),[name,setName]=useState(''),[image,setImage]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[settingsOpen,setSettingsOpen]=useState(false),[infoOpen,setInfoOpen]=useState(false),[mode,setMode]=useState<'geometry'|'slicer'|'manual'>('geometry'),[plateId,setPlateId]=useState(1),[manualGrams,setManualGrams]=useState(0),[manualHours,setManualHours]=useState(0),[batchScope,setBatchScope]=useState(false),[quoteInternal,setQuoteInternal]=useState(false),[pdfUrl,setPdfUrl]=useState(''),[pdfName,setPdfName]=useState(''),[exporting,setExporting]=useState(false),[dragging,setDragging]=useState(false),[imageDimensions,setImageDimensions]=useState<[number,number,number]>([0,0,0]),[product,setProduct]=useState<ProductKind>('Other / unknown'),[complexity,setComplexity]=useState('Medium'),[planningRange,setPlanningRange]=useState({...emptyRange}),[revision,setRevision]=useState(0);
  const fileInput=useRef<HTMLInputElement>(null),worker=useRef<Worker|null>(null),timer=useRef<ReturnType<typeof setTimeout>|null>(null),uploadId=useRef(0),quoteToken=useRef(0);
  useEffect(()=>()=>{worker.current?.terminate();if(timer.current)clearTimeout(timer.current);},[]);
  useEffect(()=>()=>{if(image)URL.revokeObjectURL(image);},[image]);
@@ -45,17 +27,45 @@ function App(){
  useEffect(()=>{if(!settingsOpen&&!infoOpen)return;const previous=document.body.style.overflow;document.body.style.overflow='hidden';const fn=(e:KeyboardEvent)=>{if(e.key==='Escape'){setSettingsOpen(false);setInfoOpen(false);}};window.addEventListener('keydown',fn);return()=>{document.body.style.overflow=previous;window.removeEventListener('keydown',fn);};},[settingsOpen,infoOpen]);
  function cancel(){uploadId.current++;worker.current?.terminate();worker.current=null;if(timer.current)clearTimeout(timer.current);setBusy(false);}
  function update<K extends keyof Config>(key:K,value:Config[K]){setConfig(c=>({...c,[key]:value}));}
- function reset(){cancel();setAnalysis(null);setFilename('');setName('');setImage('');setMode('geometry');setConfig({...defaultConfig});setPlanningRange({...emptyRange});setManualGrams(0);setManualHours(0);setImageDimensions([0,0,0]);setPhotoShape(null);setError('');setNotice('Job reset. Your pricing settings are saved.');}
+ function reset(){cancel();setAnalysis(null);setFilename('');setName('');setImage('');setMode('geometry');setConfig({...defaultConfig});setPlanningRange({...emptyRange});setManualGrams(0);setManualHours(0);setImageDimensions([0,0,0]);setPhotoShape(null);setRecognition(null);setRecognizing(false);setProduct('Other / unknown');setError('');setNotice('Job reset. Your pricing settings are saved.');}
  function applyProject(a:Analysis){const p=a.project;setPlanningRange({...emptyRange});setConfig(old=>{const candidate=printerIds.find(id=>p?.printer?.includes('Bambu Lab '+id)||p?.printer===id);const nozzle=p?.nozzle&&[0.2,0.4,0.6,0.8].includes(p.nozzle)?p.nozzle:old.nozzle;return {...defaultConfig,...p?.settings,printer:candidate??old.printer,nozzle,layer:p?.settings?.layer??nozzle*0.5,lineWidth:p?.settings?.lineWidth??nozzle+0.02,material:materials.includes(p?.material as Material)?p!.material as Material:old.material,colours:a.plates[0]?.colours??p?.colours??0};});}
  async function upload(file?:File){
   if(!file)return;setError('');if(file.size>MAX_FILE){setError('File is too large. The maximum is 160 MB.');return;}
   const ext=file.name.split('.').pop()?.toLowerCase();if(!['stl','3mf','jpg','jpeg','png','webp'].includes(ext??'')){setError('Choose an STL, 3MF, JPG, PNG or WEBP file.');return;}
-  cancel();const id=uploadId.current;setAnalysis(null);setImage('');setPhotoShape(null);setFilename(file.name);setName(file.name.replace(/\.[^.]+$/,''));setManualGrams(0);setManualHours(0);setPlanningRange({...emptyRange});setConfig(c=>({...c,scale:100,purgeGrams:0,changeMinutes:0,quantity:1,unitsPerBatch:1}));
+  cancel();const id=uploadId.current;setAnalysis(null);setImage('');setPhotoShape(null);setRecognition(null);setRecognizing(false);setFilename(file.name);setName(file.name.replace(/\.[^.]+$/,''));setManualGrams(0);setManualHours(0);setPlanningRange({...emptyRange});setConfig(c=>({...c,scale:100,purgeGrams:0,changeMinutes:0,quantity:1,unitsPerBatch:1}));
   if(['jpg','jpeg','png','webp'].includes(ext!)){
    if(file.size>20*1024*1024){setError('Images must be below 20 MB.');setFilename('');return;}
-   const url=URL.createObjectURL(file),img=new window.Image();img.onload=()=>{if(id!==uploadId.current){URL.revokeObjectURL(url);return;}if(img.naturalWidth*img.naturalHeight>40000000){URL.revokeObjectURL(url);setError('Image exceeds the 40 megapixel limit.');setFilename('');return;}let inspected:PhotoShape;try{inspected=inspectPhoto(img);}catch{inspected={status:'uncertain',reason:'Could not inspect image pixels.',widthRatio:1,heightRatio:1,fill:0,edgeDensity:0,longestMm:100};}
-   setPhotoShape(inspected);setImage(url);setImageDimensions(inspected.status==='detected'?proposedPhotoDimensions(inspected,product):[100,100,100]);setMode('manual');setBatchScope(false);
-   setNotice(inspected.status==='detected'?'Foreground analysed locally. Price range uses assumed 100 mm longest side; confirm physical dimensions.':'Photo has no reliable silhouette. Price uses generic 100 mm assumptions; confirm dimensions.');};img.onerror=()=>{URL.revokeObjectURL(url);setError('This image could not be decoded.');setFilename('');};img.src=url;return;
+   const url=URL.createObjectURL(file),img=new window.Image();
+   img.onload=()=>{
+    if(id!==uploadId.current){URL.revokeObjectURL(url);return;}
+    if(img.naturalWidth*img.naturalHeight>40000000){URL.revokeObjectURL(url);setError('Image exceeds the 40 megapixel limit.');setFilename('');return;}
+    let inspected:PhotoShape;
+    try{inspected=inspectPhoto(img);}catch{inspected={status:'uncertain',reason:'Unable to inspect photo pixels.',widthRatio:1,heightRatio:1,fill:0,edgeDensity:0,longestMm:100};}
+    const suggestion=nameHint(file.name);
+    setPhotoShape(inspected);setRecognition(suggestion);setProduct(suggestion.kind);
+    setImageDimensions(sizePreset(suggestion.kind));setImage(url);setMode('manual');setBatchScope(false);setRecognizing(true);
+    setNotice(suggestion.kind==='Other / unknown'?'Identifying product locally; please choose its type if recognition fails.':'Product suggested from filename; analysing image for a second opinion.');
+    void classifyInBrowser(url).then(vision=>{
+      if(id!==uploadId.current)return;
+      // Do not override an explicit user correction or a previous confident filename match.
+      setRecognition(previous=>{
+       if(vision.kind==='Other / unknown')return previous??vision;
+       if(previous?.source==='manual')return previous;
+       if(previous?.source==='filename'&&previous.kind!==vision.kind){
+        return {...previous,detail:`Filename suggests ${previous.kind}, image model suggests ${vision.kind}; confirm category below.`};
+       }
+       setProduct(current=>{
+        if(current==='Other / unknown'||current===suggestion.kind){setImageDimensions(sizePreset(vision.kind));return vision.kind;}
+        return current;
+       });
+       return vision;
+      });
+    }).catch(()=>{
+      if(id===uploadId.current)setRecognition(previous=>previous?.kind!=='Other / unknown'?previous:{kind:'Other / unknown',source:'unknown',detail:'On-device AI model unavailable. Choose a product category to proceed.'});
+    }).finally(()=>{if(id===uploadId.current)setRecognizing(false);});
+   };
+   img.onerror=()=>{URL.revokeObjectURL(url);setError('This image could not be decoded.');setFilename('');};
+   img.src=url;return;
   }
   setBusy(true);setMode('geometry');const w=new Worker(new URL('./workers/analyse.worker.ts',import.meta.url),{type:'module'});worker.current=w;
   timer.current=setTimeout(()=>{if(worker.current!==w)return;cancel();setError('Analysis stopped after 90 seconds. Simplify the mesh or enter values manually.');},90000);
@@ -63,7 +73,7 @@ function App(){
   w.onerror=()=>{if(worker.current!==w)return;cancel();setError('Analysis worker failed. Try a smaller file or use manual values.');};
   try{const buffer=await file.arrayBuffer();if(worker.current===w)w.postMessage({buffer,name:file.name},[buffer]);}catch{cancel();setError('Unable to read this file.');}
  }
- function sample(){cancel();setImage('');setPhotoShape(null);setFilename('Sample coaster.stl');setName('Sample coaster');const a={...analysePositions(sampleCoaster()),parts:1,plates:[],sliced:false};setAnalysis(a);setConfig({...defaultConfig});setPlanningRange({...emptyRange});setMode('geometry');setError('');setNotice('Sample loaded: an 80 mm × 4 mm coaster. Figures are geometry estimates.');}
+ function sample(){cancel();setImage('');setPhotoShape(null);setRecognition(null);setRecognizing(false);setFilename('Sample coaster.stl');setName('Sample coaster');const a={...analysePositions(sampleCoaster()),parts:1,plates:[],sliced:false};setAnalysis(a);setConfig({...defaultConfig});setPlanningRange({...emptyRange});setMode('geometry');setError('');setNotice('Sample loaded: an 80 mm × 4 mm coaster. Figures are geometry estimates.');}
  const result=useMemo(()=>{
   if(busy)return {estimate:null,price:null,error:''};
   try{
@@ -71,10 +81,11 @@ function App(){
    if(mode==='slicer'&&analysis){const plate=analysis.plates.find(p=>p.id===plateId);if(plate)estimate={grams:plate.grams,modelGrams:plate.grams,supportGrams:0,purgeGrams:0,hours:plate.hours,classification:'Slicer-derived',basis:'batch',scope:`One complete batch · original plate ${plate.id}`,notes:[...(plate.notes??[]),`Statistics from ${plate.source}. Validated numeric totals; not resliced or independently measured.`,`Original settings: ${analysis.project?.printer||'printer unknown'}; ${analysis.project?.nozzle??'unknown'} mm; ${analysis.project?.material||'material unknown'}. Confirm the pricing profile matches.`,`Total plate filament and time include the original slice's supports, purge and tower where recorded. No extra waste or change time is added.`,`Confirm items per batch. Partial final batches repeat and charge the full plate. All filament is priced at the selected ${config.material} rate.`,`Preview bounds cover the complete project, including other plates. Each plate must be quoted separately.`]};}
    else if(mode==='geometry'&&analysis)estimate=geometryEstimate(analysis,config,settings);
    else if(mode==='manual'&&(filename||manualGrams||manualHours)){
-    const photo=image?photoPlanningEstimate(imageDimensions,product,complexity,config,settings,photoShape):null;
+    if(image&&product==='Other / unknown')return {estimate:null,price:null,error:recognizing?'Identifying product category on device…':'Select a product category to generate a provisional price.'};
+    const photo=image&&product!=='Other / unknown'?productPhotoEstimate(product,imageDimensions,complexity,config,settings,photoShape):null;
     const grams=manualGrams>0?manualGrams:photo?.grams??0;
     const hours=manualHours>0?manualHours:photo?.hours??0;
-    estimate={grams,modelGrams:grams,supportGrams:0,purgeGrams:0,hours,classification:image?'Preliminary estimate':'Manual estimate',basis:batchScope?'batch':'item',scope:batchScope?'One complete batch':'One item · preliminary assumptions',incomplete:!!image,notes:[image?`Photo-only preliminary scenario, NOT a 3D reconstruction or slice. ${photoShape?.status==='detected'?'The local analyser extracted a foreground silhouette and relative width/height; its 100 mm longest side and depth are assumed, not measured.':`No reliable foreground silhouette: ${photoShape?.reason??'unknown'}. Dimensions are generic defaults.`} Editable dimensions: ${imageDimensions.join(' × ')} mm; category: ${product}; complexity: ${complexity}. Weight/time remain unverified assumptions.`:'Grams and machine hours were entered manually; they are not slicer-derived.',image?'Planning bounds describe illustrative low/high scenarios, NOT a validated confidence interval. Supports, colour transitions, purge, tower, warm-up and labour can differ significantly. Confirm with a real model/slice before selling.':'Entered totals must include supports, purge, prime tower, warm-up and tool / AMS changes as applicable.',batchScope?'A partial final batch is charged as a full batch.':'Material and time scale linearly by quantity. Confirm batching in Bambu Studio.']};
+    estimate={grams,modelGrams:grams,supportGrams:0,purgeGrams:0,hours,classification:image?'Preliminary estimate':'Manual estimate',basis:batchScope?'batch':'item',scope:batchScope?'One complete batch':'One item · preliminary assumptions',incomplete:!!image,notes:[image?`Photo-only preliminary scenario, NOT a 3D reconstruction or slice. ${photoShape?.status==='detected'?'The local analyser extracted a foreground silhouette and relative width/height; its 100 mm longest side and depth are assumed, not measured.':`No reliable foreground silhouette: ${photoShape?.reason??'unknown'}. Dimensions are generic defaults.`} Editable dimensions: ${imageDimensions.join(' × ')} mm; category: ${product} (${recognition?.source??'unknown'}). Physical size, printable topology, material, colours, weight and print time remain unverified assumptions.`:'Grams and machine hours were entered manually; they are not slicer-derived.',image?'Planning bounds describe illustrative low/high scenarios, NOT a validated confidence interval. Supports, colour transitions, purge, tower, warm-up and labour can differ significantly. Confirm with a real model/slice before selling.':'Entered totals must include supports, purge, prime tower, warm-up and tool / AMS changes as applicable.',batchScope?'A partial final batch is charged as a full batch.':'Material and time scale linearly by quantity. Confirm batching in Bambu Studio.']};
     if(photo){
       const gramsLow=manualGrams>0?manualGrams:photo.lowGrams,gramsHigh=manualGrams>0?manualGrams:photo.highGrams;
       const hoursLow=manualHours>0?manualHours:photo.lowHours,hoursHigh=manualHours>0?manualHours:photo.highHours;
@@ -85,7 +96,7 @@ function App(){
    if(mode==='geometry'&&(!estimate.range||planningRange.gramsLow>0||planningRange.gramsHigh>0||planningRange.hoursLow>0||planningRange.hoursHigh>0))estimate=applyPlanningRange(estimate,planningRange);
    const price=calculatePrice(estimate,config,settings);const priceRange=calculatePriceRange(estimate,config,settings);return {estimate,price,priceRange,error:''};
   }catch(e){return {estimate:null,price:null,error:(e as Error).message};}
- },[config,settings,analysis,mode,plateId,manualGrams,manualHours,batchScope,image,imageDimensions,product,complexity,filename,busy,revision,planningRange,photoShape]);
+ },[config,settings,analysis,mode,plateId,manualGrams,manualHours,batchScope,image,imageDimensions,product,complexity,filename,busy,revision,planningRange,photoShape,recognition,recognizing]);
  const manualMinutes=Math.round(manualHours*60);
  const {estimate,price}=result;
  const priceRange='priceRange' in result?result.priceRange:undefined;
@@ -107,8 +118,8 @@ function App(){
  <div className="card-foot"><span><ShieldCheck size={14}/> No uploads. No external processing.</span><button className="text-button" onClick={manual}>Enter values manually <ArrowUpRight size={13}/></button></div></section>
  <section className="card config-card"><div className="card-heading"><div><span className="section-index">02</span><h2>Make it print-ready</h2></div><SlidersHorizontal size={17}/></div>
  <div className="form-body"><label className="field product-name"><span>Product name</span><input value={name} maxLength={120} placeholder="e.g. Custom desk organiser" onChange={e=>setName(e.target.value)}/></label>
- {image&&<div className="photo-detection-status" role="status"><Info size={15}/><span>{photoShape?.status==='detected'?`Foreground detected · relative shape ${Math.round(photoShape.widthRatio*100)}% wide × ${Math.round(photoShape.heightRatio*100)}% tall. Scale and depth assumed.`:`Image detection uncertain · ${photoShape?.reason??'No reliable silhouette'}. Showing generic preliminary scenario; refine dimensions.`}</span></div>}
- {image&&<details className="image-fields"><summary>Optional · refine photo assumptions</summary><div className="inline-note"><Info size={16}/><span>Browser-only silhouette analysis provides proportions when possible. Longest dimension defaults to 100 mm; depth and physical scale cannot be measured. Confirm dimensions and category.</span></div><div className="field-grid three">{['Width','Depth','Height'].map((label,i)=><Num key={label} label={label} value={imageDimensions[i]} unit="mm" onChange={n=>setImageDimensions(old=>old.map((v,j)=>j===i?n:v) as [number,number,number])}/>)}</div><div className="field-grid"><label className="field"><span>Product type</span><select value={product} onChange={e=>setProduct(e.target.value)}>{['Figurine / decorative','Functional part','Flat product / coaster','Custom product'].map(v=><option key={v}>{v}</option>)}</select></label><label className="field"><span>Complexity</span><select value={complexity} onChange={e=>setComplexity(e.target.value)}>{['Low','Medium','High'].map(v=><option key={v}>{v}</option>)}</select></label></div><Num label="Design / customisation · once per order" value={settings.design} unit="S$" onChange={n=>setSettings(s=>({...s,design:n}))}/></details>}
+ {image&&<div className="photo-classification"><label className="field"><span>Product identified · confirm category</span><select value={product} onChange={e=>{const next=e.target.value as ProductKind;setProduct(next);setRecognition({kind:next,source:'manual',detail:'Category confirmed by operator; dimensions remain assumptions.'});setImageDimensions(sizePreset(next));}}>{kinds.map(kind=><option key={kind} value={kind}>{kind}</option>)}</select></label><p className="estimation-help">{recognizing?'Analysing photo with on-device AI (first use may download model)…':recognition?.detail??'Product type not verified.'} {product!=='Other / unknown'?'Suggested dimensions are editable under Photo assumptions.':''}</p></div>}
+ {image&&<details className="image-fields"><summary>Optional · refine photo assumptions</summary><div className="inline-note"><Info size={16}/><span>Product-specific dimensions are trial defaults, not measurements. Confirm width, depth and height. An image alone cannot determine infill, supports or multi-colour waste.</span></div><div className="field-grid three">{['Width','Depth','Height'].map((label,i)=><Num key={label} label={label} value={imageDimensions[i]} unit="mm" onChange={n=>setImageDimensions(old=>old.map((v,j)=>j===i?n:v) as [number,number,number])}/>)}</div><div className="field-grid"><label className="field"><span>Complexity</span><select value={complexity} onChange={e=>setComplexity(e.target.value)}>{['Low','Medium','High'].map(v=><option key={v}>{v}</option>)}</select></label></div><Num label="Design / customisation · once per order" value={settings.design} unit="S$" onChange={n=>setSettings(s=>({...s,design:n}))}/></details>}
  {analysis&&<div className="estimate-tabs" aria-label="Estimate source"><button className={mode==='geometry'?'active':''} onClick={()=>setMode('geometry')}>Geometry estimate</button>{analysis.plates.length>0&&<button className={mode==='slicer'?'active':''} onClick={()=>setMode('slicer')}>Slice statistics</button>}<button className={mode==='manual'?'active':''} onClick={manual}>Manual values</button></div>}
  {locked&&<div className="slice-note"><CheckCircle2 size={17}/><div><strong>Using original slice statistics</strong><p>Print controls are inactive. The original slice details appear under quote assumptions. Switch to Geometry estimate for a changed setup.</p></div></div>}
  {locked&&<label className="field"><span>Plate to quote</span><select value={plateId} onChange={e=>{const id=Number(e.target.value);setPlateId(id);setConfig(c=>({...c,colours:analysis?.plates.find(p=>p.id===id)?.colours??0,dual:(analysis?.plates.find(p=>p.id===id)?.tools??(c.dual?2:1))>1}));}}>{analysis?.plates.map(p=><option key={p.id} value={p.id}>Plate {p.id} · {p.grams.toFixed(1)} g · {duration(p.hours)}</option>)}</select></label>}
