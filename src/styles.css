@@ -166,3 +166,11 @@
 .photo-detection-status{display:flex;align-items:flex-start;gap:8px;margin:14px 22px 0;padding:11px 13px;border:1px solid #dfd8f3;border-radius:7px;background:#f7f4ff;color:#74659b;font-size:11px;line-height:1.6}
 .photo-detection-status svg{margin-top:1px}
 :root[data-theme="dark"] .photo-detection-status{background:#2a2940;border-color:#554b75;color:#ccc0f1}
+
+/* Product identification is visible before optional costing configuration. */
+.photo-classification{margin:14px 23px 17px;padding:14px 15px;border-radius:8px;border:1px solid #dcd4f4;background:#f7f4ff}
+.photo-classification .field>span{font-weight:650;color:#6e569e}
+.photo-classification .estimation-help{margin:9px 0 0}
+:root[data-theme="dark"] .photo-classification{background:#29283d;border-color:#514669}
+:root[data-theme="dark"] .photo-classification .field>span{color:#ceb9ff}
+@media(max-width:760px){.photo-classification{margin:12px 18px 14px}}
