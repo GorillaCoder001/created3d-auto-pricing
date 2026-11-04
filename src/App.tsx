@@ -20,19 +20,19 @@ function App(){
  const [theme,setTheme]=useState<'light'|'dark'>(loadTheme);
  useEffect(()=>{document.documentElement.dataset.theme=theme;document.documentElement.style.colorScheme=theme;try{localStorage.setItem(THEME_STORAGE,theme);}catch{/* Storage may be disabled. */}},[theme]);
  const [photoShape,setPhotoShape]=useState<PhotoShape|null>(null),[recognition,setRecognition]=useState<Recognition|null>(null),[recognizing,setRecognizing]=useState(false),[settings,setSettings]=useState(loadSettings),[config,setConfig]=useState<Config>({...defaultConfig}),[analysis,setAnalysis]=useState<Analysis|null>(null),[filename,setFilename]=useState(''),[name,setName]=useState(''),[image,setImage]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[settingsOpen,setSettingsOpen]=useState(false),[infoOpen,setInfoOpen]=useState(false),[mode,setMode]=useState<'geometry'|'slicer'|'manual'>('geometry'),[plateId,setPlateId]=useState(1),[manualGrams,setManualGrams]=useState(0),[manualHours,setManualHours]=useState(0),[batchScope,setBatchScope]=useState(false),[quoteInternal,setQuoteInternal]=useState(false),[pdfUrl,setPdfUrl]=useState(''),[pdfName,setPdfName]=useState(''),[exporting,setExporting]=useState(false),[dragging,setDragging]=useState(false),[imageDimensions,setImageDimensions]=useState<[number,number,number]>([0,0,0]),[product,setProduct]=useState<ProductKind>('Other / unknown'),[complexity,setComplexity]=useState('Medium'),[planningRange,setPlanningRange]=useState({...emptyRange}),[revision,setRevision]=useState(0);
- const fileInput=useRef<HTMLInputElement>(null),worker=useRef<Worker|null>(null),timer=useRef<ReturnType<typeof setTimeout>|null>(null),uploadId=useRef(0),quoteToken=useRef(0);
+ const categoryChanged=useRef(false),fileInput=useRef<HTMLInputElement>(null),worker=useRef<Worker|null>(null),timer=useRef<ReturnType<typeof setTimeout>|null>(null),uploadId=useRef(0),quoteToken=useRef(0);
  useEffect(()=>()=>{worker.current?.terminate();if(timer.current)clearTimeout(timer.current);},[]);
  useEffect(()=>()=>{if(image)URL.revokeObjectURL(image);},[image]);
  useEffect(()=>{if(!notice)return;const t=setTimeout(()=>setNotice(''),6500);return()=>clearTimeout(t);},[notice]);
  useEffect(()=>{if(!settingsOpen&&!infoOpen)return;const previous=document.body.style.overflow;document.body.style.overflow='hidden';const fn=(e:KeyboardEvent)=>{if(e.key==='Escape'){setSettingsOpen(false);setInfoOpen(false);}};window.addEventListener('keydown',fn);return()=>{document.body.style.overflow=previous;window.removeEventListener('keydown',fn);};},[settingsOpen,infoOpen]);
  function cancel(){uploadId.current++;worker.current?.terminate();worker.current=null;if(timer.current)clearTimeout(timer.current);setBusy(false);}
  function update<K extends keyof Config>(key:K,value:Config[K]){setConfig(c=>({...c,[key]:value}));}
- function reset(){cancel();setAnalysis(null);setFilename('');setName('');setImage('');setMode('geometry');setConfig({...defaultConfig});setPlanningRange({...emptyRange});setManualGrams(0);setManualHours(0);setImageDimensions([0,0,0]);setPhotoShape(null);setRecognition(null);setRecognizing(false);setProduct('Other / unknown');setError('');setNotice('Job reset. Your pricing settings are saved.');}
+ function reset(){categoryChanged.current=false;cancel();setAnalysis(null);setFilename('');setName('');setImage('');setMode('geometry');setConfig({...defaultConfig});setPlanningRange({...emptyRange});setManualGrams(0);setManualHours(0);setImageDimensions([0,0,0]);setPhotoShape(null);setRecognition(null);setRecognizing(false);setProduct('Other / unknown');setError('');setNotice('Job reset. Your pricing settings are saved.');}
  function applyProject(a:Analysis){const p=a.project;setPlanningRange({...emptyRange});setConfig(old=>{const candidate=printerIds.find(id=>p?.printer?.includes('Bambu Lab '+id)||p?.printer===id);const nozzle=p?.nozzle&&[0.2,0.4,0.6,0.8].includes(p.nozzle)?p.nozzle:old.nozzle;return {...defaultConfig,...p?.settings,printer:candidate??old.printer,nozzle,layer:p?.settings?.layer??nozzle*0.5,lineWidth:p?.settings?.lineWidth??nozzle+0.02,material:materials.includes(p?.material as Material)?p!.material as Material:old.material,colours:a.plates[0]?.colours??p?.colours??0};});}
  async function upload(file?:File){
   if(!file)return;setError('');if(file.size>MAX_FILE){setError('File is too large. The maximum is 160 MB.');return;}
   const ext=file.name.split('.').pop()?.toLowerCase();if(!['stl','3mf','jpg','jpeg','png','webp'].includes(ext??'')){setError('Choose an STL, 3MF, JPG, PNG or WEBP file.');return;}
-  cancel();const id=uploadId.current;setAnalysis(null);setImage('');setPhotoShape(null);setRecognition(null);setRecognizing(false);setFilename(file.name);setName(file.name.replace(/\.[^.]+$/,''));setManualGrams(0);setManualHours(0);setPlanningRange({...emptyRange});setConfig(c=>({...c,scale:100,purgeGrams:0,changeMinutes:0,quantity:1,unitsPerBatch:1}));
+  cancel();categoryChanged.current=false;const id=uploadId.current;setAnalysis(null);setImage('');setPhotoShape(null);setRecognition(null);setRecognizing(false);setFilename(file.name);setName(file.name.replace(/\.[^.]+$/,''));setManualGrams(0);setManualHours(0);setPlanningRange({...emptyRange});setConfig(c=>({...c,scale:100,purgeGrams:0,changeMinutes:0,quantity:1,unitsPerBatch:1}));
   if(['jpg','jpeg','png','webp'].includes(ext!)){
    if(file.size>20*1024*1024){setError('Images must be below 20 MB.');setFilename('');return;}
    const url=URL.createObjectURL(file),img=new window.Image();
@@ -48,18 +48,13 @@ function App(){
     void classifyInBrowser(url).then(vision=>{
       if(id!==uploadId.current)return;
       // Do not override an explicit user correction or a previous confident filename match.
-      setRecognition(previous=>{
-       if(vision.kind==='Other / unknown')return previous??vision;
-       if(previous?.source==='manual')return previous;
-       if(previous?.source==='filename'&&previous.kind!==vision.kind){
-        return {...previous,detail:`Filename suggests ${previous.kind}, image model suggests ${vision.kind}; confirm category below.`};
-       }
-       setProduct(current=>{
-        if(current==='Other / unknown'||current===suggestion.kind){setImageDimensions(sizePreset(vision.kind));return vision.kind;}
-        return current;
-       });
-       return vision;
-      });
+      if(categoryChanged.current)return;
+      if(vision.kind==='Other / unknown'){if(suggestion.kind==='Other / unknown')setRecognition(vision);return;}
+      if(suggestion.kind!=='Other / unknown'&&suggestion.kind!==vision.kind){
+       setRecognition({...suggestion,detail:`Filename suggests ${suggestion.kind}, image model suggests ${vision.kind}; confirm category below.`});
+       return;
+      }
+      setRecognition(vision);setProduct(vision.kind);setImageDimensions(sizePreset(vision.kind));
     }).catch(()=>{
       if(id===uploadId.current)setRecognition(previous=>previous?.kind!=='Other / unknown'?previous:{kind:'Other / unknown',source:'unknown',detail:'On-device AI model unavailable. Choose a product category to proceed.'});
     }).finally(()=>{if(id===uploadId.current)setRecognizing(false);});
@@ -118,7 +113,7 @@ function App(){
  <div className="card-foot"><span><ShieldCheck size={14}/> No uploads. No external processing.</span><button className="text-button" onClick={manual}>Enter values manually <ArrowUpRight size={13}/></button></div></section>
  <section className="card config-card"><div className="card-heading"><div><span className="section-index">02</span><h2>Make it print-ready</h2></div><SlidersHorizontal size={17}/></div>
  <div className="form-body"><label className="field product-name"><span>Product name</span><input value={name} maxLength={120} placeholder="e.g. Custom desk organiser" onChange={e=>setName(e.target.value)}/></label>
- {image&&<div className="photo-classification"><label className="field"><span>Product identified · confirm category</span><select value={product} onChange={e=>{const next=e.target.value as ProductKind;setProduct(next);setRecognition({kind:next,source:'manual',detail:'Category confirmed by operator; dimensions remain assumptions.'});setImageDimensions(sizePreset(next));}}>{kinds.map(kind=><option key={kind} value={kind}>{kind}</option>)}</select></label><p className="estimation-help">{recognizing?'Analysing photo with on-device AI (first use may download model)…':recognition?.detail??'Product type not verified.'} {product!=='Other / unknown'?'Suggested dimensions are editable under Photo assumptions.':''}</p></div>}
+ {image&&<div className="photo-classification"><label className="field"><span>Product identified · confirm category</span><select value={product} onChange={e=>{const next=e.target.value as ProductKind;categoryChanged.current=true;setProduct(next);setRecognition({kind:next,source:'manual',detail:'Category confirmed by operator; dimensions remain assumptions.'});setImageDimensions(sizePreset(next));}}>{kinds.map(kind=><option key={kind} value={kind}>{kind}</option>)}</select></label><p className="estimation-help">{recognizing?'Analysing photo with on-device AI (first use may download model)…':recognition?.detail??'Product type not verified.'} {product!=='Other / unknown'?'Suggested dimensions are editable under Photo assumptions.':''}</p></div>}
  {image&&<details className="image-fields"><summary>Optional · refine photo assumptions</summary><div className="inline-note"><Info size={16}/><span>Product-specific dimensions are trial defaults, not measurements. Confirm width, depth and height. An image alone cannot determine infill, supports or multi-colour waste.</span></div><div className="field-grid three">{['Width','Depth','Height'].map((label,i)=><Num key={label} label={label} value={imageDimensions[i]} unit="mm" onChange={n=>setImageDimensions(old=>old.map((v,j)=>j===i?n:v) as [number,number,number])}/>)}</div><div className="field-grid"><label className="field"><span>Complexity</span><select value={complexity} onChange={e=>setComplexity(e.target.value)}>{['Low','Medium','High'].map(v=><option key={v}>{v}</option>)}</select></label></div><Num label="Design / customisation · once per order" value={settings.design} unit="S$" onChange={n=>setSettings(s=>({...s,design:n}))}/></details>}
  {analysis&&<div className="estimate-tabs" aria-label="Estimate source"><button className={mode==='geometry'?'active':''} onClick={()=>setMode('geometry')}>Geometry estimate</button>{analysis.plates.length>0&&<button className={mode==='slicer'?'active':''} onClick={()=>setMode('slicer')}>Slice statistics</button>}<button className={mode==='manual'?'active':''} onClick={manual}>Manual values</button></div>}
  {locked&&<div className="slice-note"><CheckCircle2 size={17}/><div><strong>Using original slice statistics</strong><p>Print controls are inactive. The original slice details appear under quote assumptions. Switch to Geometry estimate for a changed setup.</p></div></div>}
