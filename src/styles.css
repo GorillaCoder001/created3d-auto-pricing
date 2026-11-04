@@ -11,3 +11,141 @@
 .pdf-ready{display:flex;margin-top:8px;border-color:#c8ddd1!important;background:#f0f8f3!important;color:#638d76!important}
 .local-tag svg{color:#48a8c5}.quote-metrics svg{color:#88adc5}
 .estimation-help{font-size:11px;color:#7f8ca4;line-height:1.8;margin:9px 0 13px}.planning-range{padding:10px 13px;margin:12px 0;background:#faf8ff;border:1px solid #e7e1f5;border-radius:7px}.estimate-status{display:flex;gap:7px;font-size:10px;padding:11px 23px;color:#9d8558;background:#fffaf0;border-top:1px solid #f1ead9;line-height:1.7}.calibration>.field,.advanced>.field{margin:13px 0}.calibration .text-button{margin:15px 0;display:flex}.calibration details{margin:18px 0}.calibration details summary{display:list-item}.calibration .field-grid{margin-top:12px}
+
+
+/* Minimal theme switch. Light is the default; the chosen mode persists locally. */
+.header-actions{display:flex;align-items:center;gap:10px}
+.theme-toggle{display:inline-flex;align-items:center;gap:7px;justify-content:center;border:1px solid #dfe3ee;border-radius:999px;padding:8px 10px;color:#8c97ad;background:#fff;min-height:38px;min-width:91px}
+.theme-toggle:hover{border-color:#9887d6}
+.theme-switch-track{width:29px;height:17px;background:#e4e5f0;border-radius:999px;padding:2px;display:inline-flex;align-items:center;transition:background .2s}
+.theme-switch-thumb{width:13px;height:13px;background:#fff;border-radius:50%;box-shadow:0 1px 3px #25304b36;transition:transform .2s}
+.theme-toggle>svg:first-child{color:#6e5dc4}
+:root[data-theme="dark"] .theme-switch-track{background:#7767cf}
+:root[data-theme="dark"] .theme-switch-thumb{transform:translateX(12px)}
+:root[data-theme="dark"] .theme-toggle>svg:first-child{color:#7d869a}
+:root[data-theme="dark"] .theme-toggle>svg:last-child{color:#d4c6ff}
+@media(max-width:760px){.header-actions{gap:7px}.theme-toggle{min-width:75px;padding:7px 6px;gap:4px}}
+@media(max-width:390px){.theme-toggle{min-width:70px}.header-actions{gap:5px}}
+
+/* All dark surfaces use restrained navy/slate and preserve the existing purple accent. */
+:root[data-theme="dark"]{color:#e6e9f2;background:#10141f}
+:root[data-theme="dark"] body{background:#10141f;color:#e6e9f2}
+:root[data-theme="dark"] .topbar,
+:root[data-theme="dark"] .card,
+:root[data-theme="dark"] .settings-drawer,
+:root[data-theme="dark"] .info-dialog,
+:root[data-theme="dark"] .drawer-footer,
+:root[data-theme="dark"] .toast{background:#1b2230;border-color:#313b50;color:#e6e9f2}
+:root[data-theme="dark"] .card-heading,
+:root[data-theme="dark"] .drawer-head,
+:root[data-theme="dark"] .drawer-footer,
+:root[data-theme="dark"] footer,
+:root[data-theme="dark"] .quote-metrics,
+:root[data-theme="dark"] .cost-row.manufacturing{border-color:#333e51}
+:root[data-theme="dark"] .brand small,
+:root[data-theme="dark"] .small-label,
+:root[data-theme="dark"] .section-index,
+:root[data-theme="dark"] .eyebrow,
+:root[data-theme="dark"] .workflow,
+:root[data-theme="dark"] .currency-tag{color:#9eaec7}
+:root[data-theme="dark"] .nav-active,
+:root[data-theme="dark"] .step.current,
+:root[data-theme="dark"] .intro h1 span,
+:root[data-theme="dark"] .brand-3d{color:#ad9cff}
+:root[data-theme="dark"] .step b{background:#30394b;color:#bbc5d7}
+:root[data-theme="dark"] .step.current b{background:#382f5b;color:#c9baff}
+:root[data-theme="dark"] .workflow i{background:#354058}
+:root[data-theme="dark"] .button.secondary,
+:root[data-theme="dark"] .settings-button,
+:root[data-theme="dark"] .theme-toggle,
+:root[data-theme="dark"] .preview-controls button{background:#242d3e;border-color:#44506a;color:#d1d9e9}
+:root[data-theme="dark"] .button:hover:not(:disabled),
+:root[data-theme="dark"] .theme-toggle:hover,
+:root[data-theme="dark"] .icon-button:hover{background:#33304a}
+:root[data-theme="dark"] .drop-button{background:#22283a;border-color:#5b547c}
+:root[data-theme="dark"] .drop-button:hover,
+:root[data-theme="dark"] .dragging .drop-button{background:#292740;border-color:#a394fa}
+:root[data-theme="dark"] .upload-symbol{background:#342d56;border-color:#4e406f;color:#c1a9ff}
+:root[data-theme="dark"] .drop-button strong,
+:root[data-theme="dark"] .model-stats strong,
+:root[data-theme="dark"] .quote-metrics strong,
+:root[data-theme="dark"] .price-value{color:#edf0fa}
+:root[data-theme="dark"] .model-preview,
+:root[data-theme="dark"] .image-preview,
+:root[data-theme="dark"] .empty-preview{background:#222b3c}
+:root[data-theme="dark"] .empty-preview{background:radial-gradient(ellipse at 50% 45%,#292641,#222b3c 75%)}
+:root[data-theme="dark"] .empty-preview h3{color:#d5ccef}
+:root[data-theme="dark"] .preview-grid{opacity:.25}
+:root[data-theme="dark"] .model-stats{border-color:#343f54}
+:root[data-theme="dark"] .field,
+:root[data-theme="dark"] .field>span,
+:root[data-theme="dark"] .cost-row,
+:root[data-theme="dark"] .cost-row strong,
+:root[data-theme="dark"] .cost-row.manufacturing,
+:root[data-theme="dark"] .cost-row.manufacturing strong,
+:root[data-theme="dark"] .intro p,
+:root[data-theme="dark"] .quote-actions>p,
+:root[data-theme="dark"] .pricing-note,
+:root[data-theme="dark"] .pricing-note strong,
+:root[data-theme="dark"] .compatibility,
+:root[data-theme="dark"] .compatibility p,
+:root[data-theme="dark"] .compatibility small{color:#b9c5d9}
+:root[data-theme="dark"] .field>input,
+:root[data-theme="dark"] .field>select,
+:root[data-theme="dark"] .input-wrap input{background-color:#242e40;border-color:#45516a;color:#edf0f9}
+:root[data-theme="dark"] .field>select:disabled,
+:root[data-theme="dark"] input:disabled{background-color:#272d3a;color:#929db0}
+:root[data-theme="dark"] .field>input::placeholder,
+:root[data-theme="dark"] input::placeholder{color:#8995ae}
+:root[data-theme="dark"] .manual-inputs,
+:root[data-theme="dark"] .multicolour-box,
+:root[data-theme="dark"] .image-fields,
+:root[data-theme="dark"] .planning-range,
+:root[data-theme="dark"] .estimate-tabs,
+:root[data-theme="dark"] .quote-mode>div{background:#27273b;border-color:#494261;color:#d7d1ec}
+:root[data-theme="dark"] .estimate-tabs button,
+:root[data-theme="dark"] .quote-mode button{color:#c4bce1}
+:root[data-theme="dark"] .estimate-tabs button.active,
+:root[data-theme="dark"] .quote-mode .active{background:#39314f;color:#e8ddff}
+:root[data-theme="dark"] .price-hero{background:radial-gradient(ellipse at 100% 0%,#3b315866,transparent 70%),linear-gradient(120deg,#202838,#25243a)}
+:root[data-theme="dark"] .price-value>span,
+:root[data-theme="dark"] .price-hero>p,
+:root[data-theme="dark"] .price-hero .eyebrow{color:#c6bce2}
+:root[data-theme="dark"] .badge.purple{background:#322b4b;color:#c7b0f3;border-color:#51466e}
+:root[data-theme="dark"] .badge.green{background:#1c3b36;color:#a2d5c2;border-color:#335e53}
+:root[data-theme="dark"] .badge.amber{background:#403622;color:#f2d28a}
+:root[data-theme="dark"] .profit-row{background:#203a34;border-color:#365b4d}
+:root[data-theme="dark"] .profit-row span,
+:root[data-theme="dark"] .profit-row>strong{color:#a2d7b7}
+:root[data-theme="dark"] .profit-row small{color:#8db4a1}
+:root[data-theme="dark"] .missing-costs,
+:root[data-theme="dark"] .estimate-status,
+:root[data-theme="dark"] .error-banner{background:#3c3125;border-color:#675133;color:#f5d9a1}
+:root[data-theme="dark"] .result-error{background:#442e34;border-color:#734754;color:#f2bcc6}
+:root[data-theme="dark"] .slice-note,
+:root[data-theme="dark"] .compatibility,
+:root[data-theme="dark"] .analysis-details,
+:root[data-theme="dark"] .assumptions-card{background:#252d3e;border-color:#3f4a60;color:#c5d0e0}
+:root[data-theme="dark"] .inline-note,
+:root[data-theme="dark"] .drawer-body h3,
+:root[data-theme="dark"] .info-dialog .drawer-body p,
+:root[data-theme="dark"] .info-dialog .drawer-body strong{color:#c2cde0}
+:root[data-theme="dark"] .info-dialog .drawer-body a,
+:root[data-theme="dark"] .text-button{color:#c0a9ff}
+:root[data-theme="dark"] .modal-backdrop{background:#050a14b8}
+:root[data-theme="dark"] .pdf-ready{background:#203a34!important;border-color:#3e6855!important;color:#aad7bc!important}
+:root[data-theme="dark"] .topbar nav,
+:root[data-theme="dark"] footer,
+:root[data-theme="dark"] .model-stats span,
+:root[data-theme="dark"] .quote-metrics span,
+:root[data-theme="dark"] .subheading,
+:root[data-theme="dark"] .drop-button small{color:#a9b6ca}
+:root[data-theme="dark"] .preview-help,
+:root[data-theme="dark"] .preview-label{color:#c4cce0}
+:root[data-theme="dark"] .drawer-body details>summary,
+:root[data-theme="dark"] .advanced summary,
+:root[data-theme="dark"] .analysis-details summary,
+:root[data-theme="dark"] .calibration summary,
+:root[data-theme="dark"] .assumptions-card summary,
+:root[data-theme="dark"] .print-details summary{color:#c7b7fa}
+:root[data-theme="dark"] select option{background:#242e40;color:#edf0f9}
