@@ -1,5 +1,6 @@
 import {describe,it,expect} from 'vitest';
 import {defaultConfig,defaults} from '../src/core/types';
+import {calculatePrice} from '../src/core/pricing';
 import {nameHint,sizePreset,productPhotoEstimate,normalizeRecognition,candidates} from '../src/core/product-recognition';
 describe('photo product identification and category-dependent costing',()=>{
  it('recognizes the three customer examples from filename hints',()=>{
@@ -18,6 +19,14 @@ describe('photo product identification and category-dependent costing',()=>{
   expect(charm.grams).toBeLessThan(cup.grams);
   expect(cup.grams).toBeLessThan(figurine.grams);
   expect(charm.hours).toBeLessThan(figurine.hours);
+ });
+ it('prevents identical customer planning prices for charm, cup and figurine defaults',()=>{
+  const total=(kind:'Charm / keychain'|'Cup / mug'|'Figurine / toy')=>{
+   const e=productPhotoEstimate(kind,sizePreset(kind),'Medium',defaultConfig,defaults,null);
+   return calculatePrice({grams:e.grams,modelGrams:e.grams,supportGrams:0,purgeGrams:0,hours:e.hours,classification:'Preliminary estimate',scope:'One item',notes:[]},defaultConfig,defaults).total;
+  };
+  expect(total('Charm / keychain')).toBeLessThan(total('Cup / mug'));
+  expect(total('Cup / mug')).toBeLessThan(total('Figurine / toy'));
  });
  it('keeps physical scale tied to the supplied dimensions',()=>{
   const a=productPhotoEstimate('Charm / keychain',[50,10,50],'Medium',defaultConfig,defaults,null);
