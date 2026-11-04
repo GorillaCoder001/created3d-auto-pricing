@@ -19,7 +19,7 @@ export function customerBreakdown(p:Price):Array<[string,number]>{
  return active.map(([label,v],i)=>{
   const allocated=i===active.length-1?cents-assigned:Math.round(cents*v/base);
   assigned+=allocated;
-  return [label,allocated/100];
+  return [label,allocated/100] as [string,number];
  });
 }
 export function quotationLines(name:string,c:Config,e:Estimate,p:Price,s:Settings,internal:boolean){
