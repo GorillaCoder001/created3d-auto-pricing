@@ -96,6 +96,6 @@ export function productPhotoEstimate(kind:ProductKind,dim:[number,number,number]
  const silhouette=shape?.status==='detected'?Math.max(.8,Math.min(1.2,shape.fill/.62)):1;
  const grams=Math.max(1,w*d*h/1000*occupancy[kind]*density*factor*silhouette*(c.supports?1.16:1));
  const depositionHours=grams/density*1000/Math.max(.5,s.effectiveFlow)/3600;
- const hours=Math.max(.2,depositionHours*1.5+.30+(c.supports?.25:0));
+ const hours=Math.max(.2,depositionHours*1.5+.30+(c.supports ? .25 : 0));
  return {grams,hours,lowGrams:grams*.6,highGrams:grams*1.9,lowHours:hours*.65,highHours:hours*2.2};
 }
